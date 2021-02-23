@@ -27,22 +27,25 @@ angular.module('W3FSurveyLoader', ['GoogleSpreadsheets'])
     };
 
     // Get control and set rootScope.control and $rootScope.links.control values
-    var loadControlValues = function () {
-      var q = $q.defer();
+    var getControlValues = function () {
+      var rows = gs.getRows($rootScope.answerSheets.Control, 'field')
 
-      gs.getRows(answerKey, $rootScope.answerSheets.Control, 'field').then(function (rows) {
-        _.each(rows, function (row, key) {
-          $rootScope.control[key] = row.value;
-          $rootScope.links.control[key] = row[':links'];
-        });
-
-        q.resolve();
-      }, function () {
-        q.reject();
+      _.each(rows, function (row, key) {
+        $rootScope.control[key] = row.value;
+        $rootScope.links.control[key] = row['_url'];
       });
-
-      return q.promise;
     }
+
+    var loadControlValues = function (refresh) {
+      var q = $q.defer();
+      gs.getSheets(answerKey, 'answers').then(function (sheets) {
+        $rootScope.answerSheets.Control = sheets.Control
+        getControlValues()
+        q.resolve()
+      })
+      return q.promise
+    }
+
 
     // Load the answer control sheet
     var loadControl = function () {
@@ -50,18 +53,14 @@ angular.module('W3FSurveyLoader', ['GoogleSpreadsheets'])
 
       var q = $q.defer();
 
-      loadControlValues().then(function (rows) {
-        _.each(rows, function (row, key) {
-          $rootScope.control[key] = row.value;
-          $rootScope.links.control[key] = row[':links'];
-        });
+      getControlValues()
 
         // Ensure all required fields are defined:
         var requiredFields = ['Coordinator Email', 'Researcher', 'Status'];
         var missingFields = _.filter(requiredFields, function (field) {
           return typeof $rootScope.control[field] == 'undefined';
         });
-
+        
         if (missingFields.length) {
           q.reject("Missing field " + missingFields.join(', '));
           return;
@@ -97,13 +96,13 @@ angular.module('W3FSurveyLoader', ['GoogleSpreadsheets'])
         $rootScope.anonymous = $rootScope.participant == 'Anonymous';
         $rootScope.country = $rootScope.control['Country'];
 
-        if ($rootScope.anonymous && !$rootScope.userEmail.match(/@(openownership\.org|practicalparticipation\.org)$/)) {
-          q.reject();
-          return;
-        }
+       //if ($rootScope.anonymous && !$rootScope.userEmail.match(/@(openownership\.org|practicalparticipation\.org)$/)) {
+       //   q.reject();
+       //   return;
+       // }
 
         q.resolve();
-      }, q.reject);
+
       return q.promise;
     }
 
@@ -154,6 +153,7 @@ angular.module('W3FSurveyLoader', ['GoogleSpreadsheets'])
         $rootScope.responses[question.questionid] = {
           questionid: question.questionid,
           response: '',
+          example: [],
         };
 
         // Put notes here.
@@ -187,18 +187,15 @@ angular.module('W3FSurveyLoader', ['GoogleSpreadsheets'])
     var loadMaster = function () {
       var q = $q.defer();
 
-      gs.getSheets(MASTER_KEY).then(function (sheets) {
+      gs.getSheets(MASTER_KEY, 'questions').then(function (sheets) {
 
         // Get basic configuration, replacing with defaults it none-specified
         $rootScope.config = { 'title': 'Survey tool', 'logo': '' }
-
         if (sheets['Config']) {
-          gs.getRows(MASTER_KEY, sheets['Config']).then(function (configuration) {
-            angular.forEach(configuration, function (row) {
-              $rootScope.config[row['variable']] = row['value']
-            });
+          configuration = gs.getRows(sheets['Config'])
+          angular.forEach(configuration, function (row) {
+            $rootScope.config[row['variable']] = row['value']
           });
-
         }
 
         // Check for required 'Sections' sheet
@@ -210,17 +207,13 @@ angular.module('W3FSurveyLoader', ['GoogleSpreadsheets'])
 
         // Load answer sheet and populate responses model
         $rootScope.loading = "Loading Sections...";
-        gs.getRows(MASTER_KEY, sheets['Sections']).then(function (sections) {
-          populateSections(sections);
+        populateSections(sheets['Sections'].data);
 
-          $rootScope.loading = "Loading Questions...";
+        $rootScope.loading = "Loading Questions...";
+        populateQuestions(sheets['Questions'].data);
 
-          gs.getRows(MASTER_KEY, sheets['Questions']).then(function (questions) {
-            populateQuestions(questions);
+        loadAnswerData(q);
 
-            loadAnswerData(q);
-          }, q.reject);
-        }, q.reject);
       }, function (test) {
         $rootScope.loading = false;
         $rootScope.error = "Couldn't load spreadsheet, check that keys are valid";
@@ -248,7 +241,8 @@ angular.module('W3FSurveyLoader', ['GoogleSpreadsheets'])
 
         // Populate answers. This can be done in parralel with control data load
         // since the data sets are distinct
-        gs.getRows(answerKey, $rootScope.answerSheets.Answers).then(function (answers) {
+        var answers = gs.getRows($rootScope.answerSheets.Answers)
+
           angular.forEach(answers, function (answer) {
             if (!$rootScope.questions[answer.questionid]) {
               //console.log("Answer with qid=" + answer.questionid + " does not correspond to any survey question");
@@ -296,26 +290,6 @@ angular.module('W3FSurveyLoader', ['GoogleSpreadsheets'])
 
                   collection.push(ex);
 
-                  if (ex.url && ($rootScope.participant == 'Reviewer' || $rootScope.participant == 'Coordinator')) {
-
-                    var url = ex.url.replace('https://drive.google.com/file/d/', '');
-                    url = url.split('/', 1);
-
-                    var fileId = url[0];
-                    $http({
-                      method: 'GET',
-                      url: '/google-drive.php',
-                      params: {
-                        fileId: fileId,
-                        email: $rootScope.userEmail,
-                        action: 'grantPerms'
-                      }
-                    })
-                      .error(function (data, status, headers, config) {
-                        console.log('Failed to grant access to resource');
-                      });
-                  }
-
                 }
               }
 
@@ -323,9 +297,7 @@ angular.module('W3FSurveyLoader', ['GoogleSpreadsheets'])
             });
           });
 
-          q.resolve();
-        }, q.reject);
-
+        q.resolve();
         return q.promise;
       }
 
@@ -335,7 +307,8 @@ angular.module('W3FSurveyLoader', ['GoogleSpreadsheets'])
         var q = $q.defer();
 
         // Populate notes for each question
-        gs.getRows(answerKey, $rootScope.answerSheets.Notes).then(function (rows) {
+        var rows = gs.getRows($rootScope.answerSheets.Notes)
+
           _.each(rows, function (note) {
             if (!$rootScope.notes[note.questionid]) {
               console.log("Note with qid=" + note.questionid + " does not correspond to any survey question");
@@ -361,9 +334,8 @@ angular.module('W3FSurveyLoader', ['GoogleSpreadsheets'])
             $rootScope.countNotes(sectionid);
           });
 
-          q.resolve();
-        }, q.reject);
 
+        q.resolve();
         return q.promise;
       }
 
@@ -371,19 +343,20 @@ angular.module('W3FSurveyLoader', ['GoogleSpreadsheets'])
         $rootScope.loading = "Loading Uploads"
 
         var q = $q.defer();
-        gs.getRows(answerKey, $rootScope.answerSheets.Resources).then(function (rows) {
+        var rows = gs.getRows($rootScope.answerSheets.Resources)
+
           _.each(rows, function (upload) {
             upload.uploaded = true
             $rootScope.uploads[upload.id] = upload
           })
-          q.resolve()
-        }, q.reject)
+
+        q.resolve()
         return q.promise;
       }
 
 
       // Pull sheets from answer sheet and confirm they're all there.
-      gs.getSheets(answerKey).then(function (sheets) {
+      gs.getSheets(answerKey, 'answers').then(function (sheets) {
         for (var sheet in $rootScope.answerSheets) {
           if (!sheets[sheet]) {
             loadError("Invalid answer sheet.")();
@@ -420,7 +393,7 @@ angular.module('W3FSurveyLoader', ['GoogleSpreadsheets'])
 
       if (answerKey) {
         // Pull sheets from answer sheet and confirm they're all there.
-        gs.getSheets(answerKey).then(function (sheets) {
+        gs.getSheets(answerKey, 'answer').then(function (sheets) {
           for (var sheet in $rootScope.answerSheets) {
             if (!sheets[sheet]) {
               $rootScope.error = "Invalid response data";

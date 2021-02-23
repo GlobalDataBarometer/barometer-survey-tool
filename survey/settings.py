@@ -80,7 +80,7 @@ ROOT_URLCONF = "survey.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": ['htdocs'],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [

@@ -21,27 +21,31 @@
 	<head>
 		<meta charset="utf-8"/>
 		<base href="/" />
-		<title>{{ config.title }} {{ country ? ' - ' + country : ''}}</title>
+				<script>
+          window.survey_user_email=`{{survey_user_email}}`
+        </script>
 				<script src="//apis.google.com/js/client:platform.js"></script>
-				<script src="config.js"></script>
+				<script src="static/config.js"></script>
 				<script src="//code.jquery.com/jquery-3.4.0.min.js"></script>
-				<script src="js/underscore-min.js"></script>
-				<script src="js/markdown.js"></script>
-				<script src="js/md5.js"></script>
+				<script src="static/js/underscore-min.js"></script>
+				<script src="static/js/markdown.js"></script>
+				<script src="static/js/md5.js"></script>
 				<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.20/angular.min.js"></script>
 				<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.20/angular-cookies.min.js"></script>
 				<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.20/angular-route.min.js"></script>
 				<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.20/angular-sanitize.min.js"></script>
-				<script src="js/w3f-angular-spreadsheets.js"></script>
-				<script src="js/w3f-angular-drive.js"></script>
-				<script src="js/w3f-load-survey.js"></script>
-				<script src="js/w3f-survey.js"></script>
-				<script src="js/ang-accordion.js"></script>
+				<script src="static/js/w3f-angular-spreadsheets.js"></script>
+				<script src="static/js/w3f-angular-drive.js"></script>
+				<script src="static/js/w3f-load-survey.js"></script>
+				<script src="static/js/w3f-survey.js"></script>
+				<script src="static/js/ang-accordion.js"></script>
 				<script src="https://kit.fontawesome.com/43a0ed6236.js" crossorigin="anonymous"></script>
+
+		<title> {% verbatim %} {{ config.title }} {{ country ? ' - ' + country : ''}} {% endverbatim %}</title>
 		
-		<link rel="stylesheet" href="ang-accordion.css" />
-		<link rel="stylesheet" href="styles.css" />
-		<link rel="stylesheet" href="icons.css" />
+		<link rel="stylesheet" href="static/ang-accordion.css" />
+		<link rel="stylesheet" href="static/styles.css" />
+		<link rel="stylesheet" href="static/icons.css" />
 	</head>
 
   <body ng-click="popup=false">
@@ -50,8 +54,8 @@
 		<ul class="wis-progress">
 			<li ng-repeat="sectionid in sectionOrder" ng-style="{ width: (100 / sectionOrder.length) + '%' }" update-on-response>
 				<a ng-click="navigate(sectionid)">
-					<strong>{{ sectionid }}</strong>
-					<span class="progress" ng-if="sectionQuestions.length > 0">{{ sectionAnswers.length }}/{{ sectionQuestions.length }}</span>
+					<strong>{% verbatim %} {{ sectionid }} {% endverbatim %}</strong>
+					<span class="progress" ng-if="sectionQuestions.length > 0">{% verbatim %}{{ sectionAnswers.length }}/{{ sectionQuestions.length }}{% endverbatim %}</span>
 					<span class="progress-bar-container">
 						<span class="progress-bar" ng-style="{ width: sectionQuestions.length ? sectionAnswers.length / sectionQuestions.length * 100 + '%' : '100%', backgroundColor: (sectionQuestions.length > 0 ? (sectionQuestions.length == sectionAnswers.length ? '#8f8' : '#ff8') : '#eef') }"></span>
 					</span>
@@ -61,11 +65,11 @@
 
 		<div id="wrapper" with-rail>
 			<header class="branding">
-				<h1 style="background-image: url({{ config.logo }})">{{ config.title }}</h1>
-				<h2>{{ country ? country : '' }}</h2>
+				<h1 style="background-image: url({{ config.logo }})">{% verbatim %}{{ config.title }}{% endverbatim %}</h1>
+				<h2>{% verbatim %}{{ country ? country : '' }}{% endverbatim %}</h2>
 			</header>
 
-			<div ng-if="error">{{ error }}</div>
+			<div ng-if="error">{% verbatim %}{{ error }}{% endverbatim %}</div>
 
 			<div id="sign-in" ng-show="showSignin && !error">
 				<p>Welcome to the Survey Tool.</p>

@@ -41,7 +41,8 @@
 
 			<div class="user-role-popup" ng-if="!anonymous">
 				<div class="user-role-popup-content">
-					<p>Logged in as <strong><span class="user-email">{{ userEmail }}</span>.</strong></p>
+					<p>Logged in as <strong><span class="user-email">{{ userEmail }}</span>. </strong><a href="/accounts/logout/" target="_self">(logout)</a></p>
+          
 
 					<p ng-if="participant != 'Coordinator'">You are completing this survey for <strong>{{ country }}</strong>, and your survey coordinator is <a href="mailto:{{ control['Coordinator Email'] }}">{{ control['Coordinator Name'] }}</a></p>
 
@@ -79,6 +80,7 @@
 
 	</nav>
 
+
 	<section ng-repeat="sectionid in sectionOrder" ng-init="section=sections[sectionid]" class="section" class="ng-hide" ng-if="sectionid == activeSection">
 		<h2>{{ section.title | country }}</h2>
 
@@ -87,7 +89,7 @@
 		<ang-accordion close-icon-class="fa fa-chevron-right" open-icon-class="fa fa-chevron-down">
 			
 			<collapsible-item ng-repeat="question in section.questions" item-title="{{question.question}}" one-at-a-time="true">
-				<ng-include src="'tpl/question.html'"></ng-include>
+				<ng-include src="'static/tpl/question.html'"></ng-include>
 			</collapsible-item>
 		
 		</ang-accordion>

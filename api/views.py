@@ -117,9 +117,7 @@ class SurveyPermission(permissions.BasePermission):
 
 @login_required(login_url="/accounts/login/")
 def default(request, a=None, b=None):
-    with open("htdocs/index.html") as index:
-        return HttpResponse(index.read().replace("{{survey_user_email}}", request.user.email))
-
+    return render(request, "index.html", {"survey_user_email": request.user.email})
 
 
 @login_required(login_url="/accounts/login/")

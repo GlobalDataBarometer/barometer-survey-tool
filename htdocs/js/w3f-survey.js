@@ -34,7 +34,7 @@ angular.module('W3FWIS', ['GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader'
   .config(['$routeProvider', '$locationProvider', function ($routeProvider, $locationProvider) {
     $routeProvider.when('/:answerKey?/:masterKey?', {
       controller: 'W3FSurveyController',
-      templateUrl: 'tpl/survey.html'
+      templateUrl: 'static/tpl/survey.html'
     });
 
     $locationProvider.html5Mode(true);
@@ -73,7 +73,9 @@ angular.module('W3FWIS', ['GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader'
 
   // Top-level controller
   .controller('W3FSurveyController', ['loader', 'spreadsheets', '$scope', '$rootScope', '$q', '$cookies', '$routeParams', '$interval', '$http', function (loader, gs, $scope, $rootScope, $q, $cookies, $routeParams, $interval, $http) {
+
     var answerKey = $routeParams.answerKey, queue;
+    $rootScope.answerKey = answerKey;
 
     if ($routeParams.masterKey == 'clear') {
       // Clear out my local storage and redirect back
@@ -265,7 +267,7 @@ angular.module('W3FWIS', ['GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader'
         promise;
 
       if ($rootScope.links.control['Last Access']) {
-        promise = gs.updateRow($rootScope.links.control['Last Access'].edit, record);
+        promise = gs.updateRow($rootScope.links.control['Last Access'], record);
       }
       else {
         promise = gs.insertRow($rootScope.answerSheets.Control, record);
@@ -282,7 +284,7 @@ angular.module('W3FWIS', ['GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader'
     $rootScope.unlockSurvey = function () {
       // ADDED TO AVOID FAILING WHEN THE CONTROL DOES NOT EXIST
       if ($rootScope.links.control['Last Access']) {
-        gs.deleteRow($rootScope.links.control['Last Access'].edit);
+        gs.deleteRow($rootScope.links.control['Last Access']);
       }
     }
 
@@ -354,7 +356,6 @@ angular.module('W3FWIS', ['GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader'
     }
 
     // Load the survey once we're ready.
-    $rootScope.$on('load-survey', function () {
       loader.load(answerKey).then(function (status) {
         // Check the exclusivity lock
         var lastAccess = $rootScope.control['Last Access'],
@@ -516,7 +517,8 @@ angular.module('W3FWIS', ['GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader'
                   if (upload && upload.updateMe) {
                     var promise = gs.updateUpload($rootScope.answerSheets.Resources, {
                       id: upload.id,
-                      title: upload.title
+                      title: upload.title,
+                      url: upload.url
                     });
                     promise.then(function (row) {
                       $rootScope.uploads[upload.id] = row
@@ -600,14 +602,14 @@ angular.module('W3FWIS', ['GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader'
                 var promise;
 
                 if (links[qid]) {
-                  promise = gs.updateRow(links[qid].edit, record);
+                  promise = gs.updateRow(links[qid], record);
                 }
                 else {
                   promise = gs.insertRow($rootScope.answerSheets.Answers, record);
                 }
 
                 promise.then(function (row) {
-                  links[qid] = row[':links'];
+                  links[qid] = row['_url'];
                 });
 
                 pq[qid] = promise;
@@ -654,7 +656,7 @@ angular.module('W3FWIS', ['GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader'
                     record.resolved = new Date().format();
                   }
 
-                  var promise = gs.updateRow(note[':links'].edit, record);
+                  var promise = gs.updateRow(note[':links'], record);
 
                   promise.then(function (row) {
                     if ($rootScope.forceReadOnly) {
@@ -687,7 +689,7 @@ angular.module('W3FWIS', ['GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader'
 
                   // Delete from answer sheet if it exists there
                   if (note[':links']) {
-                    pq[qid] = gs.deleteRow(note[':links'].edit, qid).then(complete, complete);
+                    pq[qid] = gs.deleteRow(note[':links'], qid).then(complete, complete);
                   }
                   else {
                     complete({ id: qid });
@@ -800,7 +802,6 @@ angular.module('W3FWIS', ['GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader'
         $rootScope.readOnly = true;
       });
 
-    });
 
 		/**
 		 * Accept a boolean or a string,
@@ -846,7 +847,7 @@ angular.module('W3FWIS', ['GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader'
 
         var state = $rootScope.statusFlow[status];
 
-        gs.updateRow($rootScope.links.control['Status'].edit, {
+        gs.updateRow($rootScope.links.control['Status'], {
           field: 'Status',
           value: completing
         })
@@ -961,7 +962,7 @@ angular.module('W3FWIS', ['GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader'
   // Attach notes to a question. Evaluate argument then evaluate against $scope
   .directive('notes', ['$rootScope', function ($rootScope) {
     return {
-      templateUrl: 'tpl/notes.html',
+      templateUrl: 'static/tpl/notes.html',
       restrict: 'E',
       scope: {},
 
@@ -1135,7 +1136,7 @@ angular.module('W3FWIS', ['GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader'
   .directive('resourceManager', ['$rootScope', '$timeout', function ($rootScope, $timeout) {
     return {
       restrict: 'E',
-      templateUrl: 'tpl/resource-manager.html',
+      templateUrl: 'static/tpl/resource-manager.html',
       scope: {},
       link: function ($scope, element, attrs) {
 
@@ -1166,9 +1167,10 @@ angular.module('W3FWIS', ['GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader'
   }])
 
   // A field for specifying a URL or a uploaded file
-  .directive('uploadableUrl', ['$rootScope', '$http', '$q', function ($rootScope, $http, $q) {
+  .directive('uploadableUrl', ['$rootScope', '$http', '$q', "$cookies",  function ($rootScope, $http, $q, $cookies) {
+  
     return {
-      templateUrl: 'tpl/uploadable-url.html',
+      templateUrl: 'static/tpl/uploadable-url.html',
       restrict: 'E',
       replace: true,
       scope: {
@@ -1306,15 +1308,10 @@ angular.module('W3FWIS', ['GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader'
 
           $http({
             method: 'POST',
-            url: '/google-drive.php',
-            params: {
-              action: 'upload',
-              filename: file.name,
-              country: $rootScope.country,
-              sheet: $rootScope.answerSheets.Control.key
-            },
+            url: '/api/survey/' + $rootScope.answerKey + '/upload_file/',
             headers: {
-              'Content-Type': undefined
+              'Content-Type': undefined,
+              'X-CSRFToken': $cookies.csrftoken
             },
             transformRequest: angular.identity,
             data: fd
@@ -1323,43 +1320,16 @@ angular.module('W3FWIS', ['GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader'
               $scope.uploading = false;
               $scope.uploadState = "Uploaded";
 
+              results.data.id = results.data.name
 
-
-              $scope.model.fileId = results.data.id;
-              $scope.model.url = results.data.webViewLink;
+              $scope.model.fileId = results.data.name;
+              $scope.model.url = results.data.url;
               $scope.model.fileName = results.data.name;
               $scope.model.locked = true;
               $scope.model.uploaded = true;
 
-              // Grant Permissions
-              var userPermPromise = $http({
-                method: 'GET',
-                url: '/google-drive.php',
-                params: {
-                  action: 'grantPerms',
-                  file_id: results.data.id,
-                  email: $rootScope.userEmail
-                },
-              });
-              var coordinatorEmail = $rootScope.control['Coordinator Email'];
-              var coordinatorPermPromise = $http({
-                method: 'GET',
-                url: '/google-drive.php',
-                params: {
-                  action: 'grantPerms',
-                  file_id: results.data.id,
-                  email: coordinatorEmail
-                },
-              });
-
-              $q.all([userPermPromise, coordinatorPermPromise]).then(function () {
-                results.data.title = $scope.model.title
-                $rootScope.queuedUploads[results.data.id] = results.data;
-              }, function () {
-                $scope.uploadState = "Failed setting upload permissions! Try again.";
-                $scope.model.locked = false;
-                $scope.model.uploaded = false;
-              });
+              results.data.title = $scope.model.title
+              $rootScope.queuedUploads[results.data.id] = results.data;
 
             }, function uploadFailed(data, status, headers, config) {
               $scope.uploadState = "Upload Failed! Try again.";
@@ -1375,7 +1345,7 @@ angular.module('W3FWIS', ['GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader'
   // Allow for insert/update/delete operations on a list of text inputs
   .directive('flexibleList', ['$rootScope', function ($rootScope) {
     return {
-      templateUrl: 'tpl/flexible-list.html',
+      templateUrl: 'static/tpl/flexible-list.html',
       restrict: 'E',
       scope: {},
 
@@ -1482,7 +1452,7 @@ angular.module('W3FWIS', ['GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader'
   .directive('fancySelect', ['$rootScope', '$timeout', function ($rootScope, $timeout) {
     return {
       restrict: 'E',
-      templateUrl: 'tpl/fancy-dropdown.html',
+      templateUrl: 'static/tpl/fancy-dropdown.html',
       replace: true,
       compile: function (element, attrs) {
         var $select = element.find('select');
@@ -1583,7 +1553,7 @@ angular.module('W3FWIS', ['GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader'
   .directive('modal', ['$rootScope', '$timeout', function ($rootScope, $timeout) {
     return {
       restrict: 'E',
-      templateUrl: 'tpl/modal.html',
+      templateUrl: 'static/tpl/modal.html',
       transclude: true,
       replace: true,
       scope: true,
@@ -1647,82 +1617,13 @@ angular.module('W3FWIS', ['GoogleSpreadsheets', 'GoogleDrive', 'W3FSurveyLoader'
         .find('iframe').attr('src', '');
     });
 
-    window.init = function () {
-      gapi.load('auth2', function () {
-        auth2 = gapi.auth2.init({
-          client_id: CLIENT_ID,
-          fetch_basic_profile: true,
-          scope: 'profile'
-        });
 
-        // Listen for sign-in state changes.
-        // auth2.isSignedIn.listen(signinChanged);
-
-        // Listen for changes to current user.
-        // auth2.currentUser.listen(userChanged);
-
-        // Sign in the user if they are currently signed in.
-
-        auth2.then(function () {
-          $rootScope.showSignin = true;
-          $rootScope.$digest();
-          gapi.signin2.render('signin2-button', {
-            'scope': 'profile',
-            'width': 220,
-            'height': 50,
-            'longtitle': true,
-            'theme': 'dark',
-            'onSuccess': signinSuccess,
-            'onFailure': signinFailure
-          });
-        });
-      });
+    $rootScope.userEmail = window.survey_user_email;
+    $rootScope.showSignin = false;
+    $rootScope.loading = "Loading Survey...";
+    $rootScope.status = {
+      message: "Loading..."
     };
 
-
-    window.signinChanged = function (val) {
-      if (val) {
-        showSurvey();
-      } else {
-        showSignin();
-      }
-    };
-
-    window.userChanged = function (user) {
-      if (user.isSignedIn()) {
-        showSurvey();
-      } else {
-        showSignin();
-      }
-    };
-
-
-    window.signinSuccess = function () {
-      var user = gapi.auth2.getAuthInstance().currentUser.get();
-      $rootScope.userEmail = user.getBasicProfile().getEmail().toLowerCase();
-      if ($rootScope.loading) {
-        return;
-      }
-      $rootScope.showSignin = false;
-      $rootScope.loading = "Loading Survey...";
-      $rootScope.status = {
-        message: "Loading..."
-      };
-      $rootScope.$broadcast('load-survey');
-    }
-
-    window.signinFailure = function () {
-      // Do nothing
-    }
-
-    function safeInit() {
-      if (typeof (gapi) == 'undefined') {
-        console.log('checking again for gapi in 1s')
-        setTimeout(safeInit, 1000)
-      } else {
-        window.init()
-      }
-    }
-    safeInit()
   }]);
 
