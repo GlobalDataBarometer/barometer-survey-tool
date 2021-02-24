@@ -98,10 +98,7 @@ class SurveyPermission(permissions.BasePermission):
     message = "You do not have permission to view this survey"
 
     def has_permission(self, request, view):
-        if (
-            view.action in ("create", "upload_spreadsheet")
-            and not request.user.is_staff
-        ):
+        if view.action in ("create", "upload_spreadsheet") and not request.user.is_staff:
             return False
         return True
 
@@ -120,9 +117,7 @@ class SurveyPermission(permissions.BasePermission):
 @login_required(login_url="/accounts/login/")
 def default(request, a=None, b=None):
     with open("htdocs/index.html") as index:
-        return HttpResponse(
-            index.read().replace("{{survey_user_email}}", request.user.email)
-        )
+        return HttpResponse(index.read().replace("{{survey_user_email}}", request.user.email))
 
 
 class SurveyDataViewset(viewsets.ModelViewSet):
@@ -206,9 +201,7 @@ class SurveyViewset(viewsets.ModelViewSet):
         file_directory_within_bucket = "{pk}".format(pk=pk)
         storage_name = secrets.token_urlsafe(5) + "-" + file_obj.name
 
-        file_path_within_bucket = os.path.join(
-            file_directory_within_bucket, storage_name
-        )
+        file_path_within_bucket = os.path.join(file_directory_within_bucket, storage_name)
 
         default_storage.save(file_path_within_bucket, file_obj)
         file_url = default_storage.url(file_path_within_bucket)
@@ -216,9 +209,7 @@ class SurveyViewset(viewsets.ModelViewSet):
         return Response(
             {
                 "message": "OK",
-                "fileUrl": self.reverse_action(self.get_file.url_name, args=[pk])
-                + "?file="
-                + quote(storage_name),
+                "fileUrl": self.reverse_action(self.get_file.url_name, args=[pk]) + "?file=" + quote(storage_name),
             }
         )
 
@@ -233,9 +224,7 @@ class SurveyViewset(viewsets.ModelViewSet):
 
         file_path_within_bucket = os.path.join(file_directory_within_bucket, file_name)
 
-        return HttpResponseRedirect(
-            redirect_to=default_storage.url(file_path_within_bucket)
-        )
+        return HttpResponseRedirect(redirect_to=default_storage.url(file_path_within_bucket))
 
     @action(detail=False, methods=["get"])
     def upload_spreadsheet(self, request):
@@ -276,9 +265,7 @@ class QuestionDataViewset(viewsets.ModelViewSet):
     def list_types(self, request):
         QuestionData.objects.all()
         results = []
-        for item in QuestionData.objects.values("type").annotate(
-            type_count=Count("type")
-        ):
+        for item in QuestionData.objects.values("type").annotate(type_count=Count("type")):
             results.append(item)
 
         return Response(results)
@@ -300,9 +287,7 @@ class QuestionDataViewset(viewsets.ModelViewSet):
         output = {}
 
         QuestionData.objects.all()
-        for item in QuestionData.objects.values("type").annotate(
-            type_count=Count("type")
-        ):
+        for item in QuestionData.objects.values("type").annotate(type_count=Count("type")):
             type = item["type"]
             type_queryset = queryset.filter(type=type)
             serializer = self.get_serializer(type_queryset, many=True)

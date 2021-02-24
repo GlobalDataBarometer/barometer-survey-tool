@@ -31,30 +31,20 @@ class SpreadheetActions(TestCase):
 
     def test_001_get_sheets_values(self):
         self.assertEqual(
-            api.spreadsheet_actions.sheets_data(
-                self.spreadsheet_id, ["worksheet1", "worksheet2"]
-            ),
+            api.spreadsheet_actions.sheets_data(self.spreadsheet_id, ["worksheet1", "worksheet2"]),
             {
                 "worksheet1": {
                     "headings": ["id", "heading_a", "heading_b"],
-                    "records": [
-                        {"id": "1", "heading_a": "value_a", "heading_b": "value_b"}
-                    ],
-                    "records_by_id": {
-                        "1": {"id": "1", "heading_a": "value_a", "heading_b": "value_b"}
-                    },
+                    "records": [{"id": "1", "heading_a": "value_a", "heading_b": "value_b"}],
+                    "records_by_id": {"1": {"id": "1", "heading_a": "value_a", "heading_b": "value_b"}},
                     "data": [["1", "value_a", "value_b"]],
                     "count": 1,
                     "id_to_row_number": {"1": 0},
                 },
                 "worksheet2": {
                     "headings": ["id", "heading_x", "heading_y"],
-                    "records": [
-                        {"id": "1", "heading_x": "value_x", "heading_y": "value_y"}
-                    ],
-                    "records_by_id": {
-                        "1": {"id": "1", "heading_x": "value_x", "heading_y": "value_y"}
-                    },
+                    "records": [{"id": "1", "heading_x": "value_x", "heading_y": "value_y"}],
+                    "records_by_id": {"1": {"id": "1", "heading_x": "value_x", "heading_y": "value_y"}},
                     "data": [["1", "value_x", "value_y"]],
                     "count": 1,
                     "id_to_row_number": {"1": 0},
@@ -146,9 +136,7 @@ class SpreadheetActions(TestCase):
             {
                 "worksheet1": {
                     "headings": ["id", "heading_a", "heading_b"],
-                    "records": [
-                        {"id": "2", "heading_a": "value_a2", "heading_b": "value_b2"}
-                    ],
+                    "records": [{"id": "2", "heading_a": "value_a2", "heading_b": "value_b2"}],
                     "records_by_id": {
                         "2": {
                             "id": "2",

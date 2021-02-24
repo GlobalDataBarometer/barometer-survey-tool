@@ -13,9 +13,7 @@ def validate_survey_data_type(value):
         if item.startswith("_"):
             raise ValidationError("fields can not start with '_'")
         if item in SURVEY_DATA_PRIVATE_FIELDS:
-            raise ValidationError(
-                f"fields can not be named {' or '.join(SURVEY_DATA_PRIVATE_FIELDS)}"
-            )
+            raise ValidationError(f"fields can not be named {' or '.join(SURVEY_DATA_PRIVATE_FIELDS)}")
     if len(set(value)) != len(value):
         raise ValidationError("there can not be duplicate fields")
 
@@ -66,9 +64,7 @@ class SurveyDataLog(models.Model):
     class Meta:
         db_table = "survey_data_log"
 
-    parent = models.ForeignKey(
-        SurveyData, on_delete=models.CASCADE, db_constraint=False
-    )
+    parent = models.ForeignKey(SurveyData, on_delete=models.CASCADE, db_constraint=False)
     event_datetime = models.DateTimeField()
     action = models.CharField(max_length=1)
     username = models.TextField()

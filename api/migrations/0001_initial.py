@@ -4,7 +4,7 @@ import api.models
 from django.db import migrations, models
 import django.db.models.deletion
 
-trigger_sql = '''
+trigger_sql = """
 CREATE OR REPLACE FUNCTION public.{table_name}_log_trigger()
  RETURNS trigger LANGUAGE plpgsql
 AS $function$
@@ -19,9 +19,9 @@ END;
 $function$;
 
 CREATE TRIGGER log_{table_name} AFTER INSERT OR UPDATE OR DELETE ON {table_name} FOR EACH ROW EXECUTE FUNCTION {table_name}_log_trigger();
-'''
+"""
 
-field_types_sql = '''
+field_types_sql = """
 insert into survey_data_type(type, fields) values 
     ('Control', '["field", "value"]'),
     ('Answers', '[
@@ -52,7 +52,8 @@ insert into survey_data_type(type, fields) values
             "resolved"
             ]'),
     ('Resources','["id","url","title"]')
-'''
+"""
+
 
 class Migration(migrations.Migration):
 
@@ -112,9 +113,7 @@ class Migration(migrations.Migration):
                 ("data", models.JSONField()),
                 (
                     "survey",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="api.survey"
-                    ),
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="api.survey"),
                 ),
             ],
             options={
@@ -204,10 +203,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="surveydata",
             name="type",
-            field=models.ForeignKey(
-                on_delete=django.db.models.deletion.PROTECT, to="api.surveydatatype"
-            ),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to="api.surveydatatype"),
         ),
-        migrations.RunSQL(trigger_sql.format(table_name='survey_data')),
+        migrations.RunSQL(trigger_sql.format(table_name="survey_data")),
         migrations.RunSQL(field_types_sql),
     ]
