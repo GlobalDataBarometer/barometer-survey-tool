@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+  <head>
+    <title>{% block head_title %}{% endblock %}</title>
+    {% block extra_head %}
+    {% endblock %}
+
+		<link rel="stylesheet" href="{% static 'styles.css' %}" />
+		<link rel="stylesheet" href="{% static 'icons.css' %}" />
+  </head>
+  <body>
+  <div id="wrapper">
+
+    {% block body %}
+
+    {% if messages %}
+    <div>
+        {% for message in messages %}
+        <h3>{{message}}</h3>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div>
+      <ul class="wis-progress">
+        {% if user.is_authenticated %}
+        <li><a href="{% url 'account_email' %}">Change E-mail</a></li>
+        <li><a href="{% url 'account_logout' %}">Sign Out</a></li>
+        {% else %}
+        <li><a href="{% url 'account_login' %}">Sign In</a></li>
+        <li><a href="{% url 'account_signup' %}">Sign Up</a></li>
+        {% endif %}
+      </ul>
+    </div>
+    {% block content %}
+    {% endblock %}
+    {% endblock %}
+    {% block extra_body %}
+    {% endblock %}
+  </div>
+  </body>
+</html>
