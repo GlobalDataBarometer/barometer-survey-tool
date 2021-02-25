@@ -8,6 +8,7 @@ from api.models import (
     SURVEY_DATA_PRIVATE_FIELDS,
 )
 from django.contrib.auth.models import User
+from urllib.parse import quote
 
 
 class SurveySerializer(serializers.ModelSerializer):
@@ -130,6 +131,8 @@ class QuestionDataSerializer(serializers.ModelSerializer):
 
         internal_value = super().to_internal_value(data)
 
+        internal_value["name"] = self.context["request"].query_params.get("name", "")
+
         return internal_value
 
     def to_representation(self, instance):
@@ -139,5 +142,8 @@ class QuestionDataSerializer(serializers.ModelSerializer):
         output.update(data)
 
         output["_url"] = self.context["view"].reverse_action("detail", args=[instance.id])
+        if instance.name:
+            output["_url"] += f'?name={quote(instance.name)}'
+
 
         return output

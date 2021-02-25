@@ -42,7 +42,7 @@ def check_user_queryset(user, survey_id=None):
     if not control_data_type:
         return SurveyData.objects.none()
 
-    hashed_email = hashlib.md5(user.email.encode()).hexdigest()
+    hashed_email = hashlib.md5(user.email.lower().encode()).hexdigest()
 
     queryset = SurveyData.objects.all()
     if survey_id:
@@ -52,6 +52,7 @@ def check_user_queryset(user, survey_id=None):
     queryset = queryset.filter(
         Q(data__contains={"Field": "Researcher", "Value": hashed_email})
         | Q(data__contains={"Field": "Reviewer", "Value": hashed_email})
+        | Q(data__contains={"Field": "Coordinator Email", "Value": user.email})
     )
     return queryset
 
@@ -263,17 +264,41 @@ class QuestionDataViewset(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"])
     def list_types(self, request):
-        QuestionData.objects.all()
         results = []
-        for item in QuestionData.objects.values("type").annotate(type_count=Count("type")):
+        for item in self.get_queryset().values("type").annotate(type_count=Count("type")):
+            results.append(item)
+
+        return Response(results)
+
+    @action(detail=False, methods=["get"])
+    def list_names(self, request):
+        results = []
+        for item in QuestionData.objects.all().values("name").annotate(name_count=Count("name")):
             results.append(item)
 
         return Response(results)
 
     @action(detail=False, methods=["get"])
     def upload_spreadsheet(self, request):
-        results = import_question_data(settings.SURVEY_QUESTIONS_SHEET)
+        name = self.request.query_params.get("name", "")
+
+        spreadsheet = self.request.query_params.get("spreadsheet")
+        if name and not spreadsheet:
+            return Response(
+                {
+                    "message": "Need to speadsheet url paramenter",
+                },
+                status=400,
+            )
+
+        results = import_question_data(spreadsheet or settings.SURVEY_QUESTIONS_SHEET, name)
         return Response(results)
+
+    def get_queryset(self):
+        name = self.request.query_params.get("name", "")
+        queryset = QuestionData.objects.all()
+        queryset = queryset.filter(name=name)
+        return queryset
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
@@ -286,8 +311,7 @@ class QuestionDataViewset(viewsets.ModelViewSet):
 
         output = {}
 
-        QuestionData.objects.all()
-        for item in QuestionData.objects.values("type").annotate(type_count=Count("type")):
+        for item in self.get_queryset().values("type").annotate(type_count=Count("type")):
             type = item["type"]
             type_queryset = queryset.filter(type=type)
             serializer = self.get_serializer(type_queryset, many=True)

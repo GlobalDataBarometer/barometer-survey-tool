@@ -5,7 +5,7 @@ from django.db import transaction
 
 
 @transaction.atomic
-def import_question_data(spreadsheet, overwrite=True):
+def import_question_data(spreadsheet, name, overwrite=True):
 
     if not spreadsheet:
         return
@@ -14,13 +14,13 @@ def import_question_data(spreadsheet, overwrite=True):
 
     spreadsheet_data = api.spreadsheet_actions.sheets_data(spreadsheet)
 
-    QuestionData.objects.all().delete()
+    QuestionData.objects.filter(name=name).delete()
 
     type_count = {}
     for type, value in spreadsheet_data.items():
         for item in value["records"]:
             data = {key.lower().replace(" ", ""): value for key, value in item.items()}
-            obj = QuestionData(type=type, data=data)
+            obj = QuestionData(type=type, data=data, name=name)
             obj.save()
         type_count[type] = value["count"]
 

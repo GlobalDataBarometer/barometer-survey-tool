@@ -75,5 +75,6 @@ class QuestionData(models.Model):
     class Meta:
         db_table = "questions_data"
 
+    name = models.TextField(default='')
     type = models.TextField()
     data = models.JSONField()

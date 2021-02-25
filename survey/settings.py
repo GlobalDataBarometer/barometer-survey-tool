@@ -132,6 +132,8 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 
+LOGIN_REDIRECT_URL="/"
+
 # Internationalization
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
 
