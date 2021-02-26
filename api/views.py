@@ -144,6 +144,8 @@ class SurveyDataViewset(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
 
+        url = self.reverse_action("list", args=[self.kwargs["survey"]])
+
         survey_type = self.request.query_params.get("type", None)
         if survey_type:
             serializer = self.get_serializer(queryset, many=True)
@@ -151,6 +153,8 @@ class SurveyDataViewset(viewsets.ModelViewSet):
             response = {}
             response["headings"] = type_object.fields
             response["data"] = serializer.data
+            response["_url"] = url
+            response["type"] = survey_type
             return Response(response)
 
         output = {}
@@ -160,6 +164,8 @@ class SurveyDataViewset(viewsets.ModelViewSet):
             type_output = {}
             type_output["headings"] = type_object.fields
             type_output["data"] = serializer.data
+            type_output["_url"] = url
+            type_output["type"] = type_object.type
             output[type_object.type] = type_output
 
         return Response(output)
@@ -210,7 +216,8 @@ class SurveyViewset(viewsets.ModelViewSet):
         return Response(
             {
                 "message": "OK",
-                "fileUrl": self.reverse_action(self.get_file.url_name, args=[pk]) + "?file=" + quote(storage_name),
+                "url": self.reverse_action(self.get_file.url_name, args=[pk]) + "?file=" + quote(storage_name),
+                "name": storage_name
             }
         )
 
