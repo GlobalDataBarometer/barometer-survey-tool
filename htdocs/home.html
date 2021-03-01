@@ -1,0 +1,32 @@
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8"/>
+    <script src="https://kit.fontawesome.com/43a0ed6236.js" crossorigin="anonymous"></script>
+		
+		<link rel="stylesheet" href="static/ang-accordion.css" />
+		<link rel="stylesheet" href="static/styles.css" />
+		<link rel="stylesheet" href="static/icons.css" />
+	</head>
+
+  <body>
+		<ul class="wis-progress">
+		</ul>
+
+    <h1> Availiable Surveys </h1>
+
+		<div id="wrapper">
+      {% if results %}
+        <ul>
+          {% for result in results %}
+            <li> <a href="/{{result.id}}"> survey {{result.id}} </a> </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        Currently you are not taking part in any surveys.
+      {% endif %}
+		</div>
+
+	</body>
+</html>

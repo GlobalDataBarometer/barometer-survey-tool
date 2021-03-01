@@ -26,7 +26,7 @@ class SurveySerializer(serializers.ModelSerializer):
             instance.control[control_data.data.get("field")] = control_data.data.get("value")
 
         output = super().to_representation(instance)
-        output["_url"] = self.context["view"].reverse_action("detail", args=[instance.id])
+        output["_url"] = reverse("survey-detail", args=[instance.id], request=self.context["request"])
         output["_data_url"] = reverse("survey-data-list", args=[instance.id], request=self.context["request"])
         return output
 

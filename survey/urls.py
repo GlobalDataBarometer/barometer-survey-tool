@@ -32,7 +32,7 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
     path("api/", include(router.urls)),
     path("api/survey/<int:survey>/", include(survey_data_router.urls)),
-    path("", api.views.default),
+    path("", api.views.home),
     path("<str:a>/", api.views.default),
     path("<str:a>/<str:b>/", api.views.default),
 ]

@@ -121,6 +121,22 @@ def default(request, a=None, b=None):
         return HttpResponse(index.read().replace("{{survey_user_email}}", request.user.email))
 
 
+
+@login_required(login_url="/accounts/login/")
+def home(request):
+
+    if request.user.is_staff:
+        serializer = SurveySerializer(Survey.objects.all(), many=True, context={'request': request})
+        results = serializer.data
+    else:
+        results = []
+        for survey_data_object in check_user_queryset(request.user):
+            serializer = SurveySerializer(survey_data_object.survey, context={'request': request})
+            results.append(serializer.data)
+
+    return render(request, "home.html", context={"results": results})
+
+
 class SurveyDataViewset(viewsets.ModelViewSet):
     serializer_class = SurveyDataSerializer
     permission_classes = [IsAuthenticated, SurveyDataPermission]
