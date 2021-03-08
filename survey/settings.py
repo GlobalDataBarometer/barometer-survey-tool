@@ -30,7 +30,7 @@ SECRET_KEY = env("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env("DEBUG")
 
-ALLOWED_HOSTS = ["odb.globaldatabarometer.org", "localhost", ".ondigitalocean.app"]
+ALLOWED_HOSTS = ["odb.globaldatabarometer.org", "localhost", ".ondigitalocean.app",".globaldatabarometer.org"]
 
 SITE_ID = 1
 
