@@ -132,7 +132,7 @@ def home(request):
             serializer = SurveySerializer(survey_data_object.survey, context={'request': request})
             results.append(serializer.data)
 
-    return render(request, "home.html", context={"results": results})
+    return render(request, "home.html", context={"results": results, "user": request.user.email})
 
 
 class SurveyDataViewset(viewsets.ModelViewSet):

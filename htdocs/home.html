@@ -12,7 +12,9 @@
 
   <body>
 		<ul class="wis-progress">
-		</ul>
+    </ul>
+    
+    
 
     <h1> Availiable Surveys </h1>
 
@@ -26,6 +28,10 @@
       {% else %}
         Currently you are not taking part in any surveys.
       {% endif %}
+
+      <p>
+      Your are logged in as {{user}}. <a href="/accounts/logout/">Logout</a>.
+      </p>
 		</div>
 
 	</body>
