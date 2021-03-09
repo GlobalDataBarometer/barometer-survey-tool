@@ -50,9 +50,9 @@ def check_user_queryset(user, survey_id=None):
 
     queryset = queryset.filter(type=control_data_type)
     queryset = queryset.filter(
-        Q(data__contains={"Field": "Researcher", "Value": hashed_email})
-        | Q(data__contains={"Field": "Reviewer", "Value": hashed_email})
-        | Q(data__contains={"Field": "Coordinator Email", "Value": user.email})
+        Q(data__contains={"field": "Researcher", "value": hashed_email})
+        | Q(data__contains={"field": "Reviewer", "value": hashed_email})
+        | Q(data__contains={"field": "Coordinator Email", "value": user.email})
     )
     return queryset
 
