@@ -9,3 +9,4 @@ _static
 static
 *.pyc
 __pycache__
+.ve
